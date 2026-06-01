@@ -40,9 +40,11 @@ const char* vertexShaderSource =
     "#version 330 core\n"
     "layout (location = 0) in vec3 aPos;\n"
     "layout (location = 1) in vec3 aNormal;\n"
+    "layout (location = 2) in vec2 aTexCoord;\n"
 
     "out vec3 FragPos;\n"
     "out vec3 Normal;\n"
+    "out vec2 TexCoord;\n"
 
     "uniform mat4 model;\n"
     "uniform mat4 view;\n"
@@ -52,6 +54,7 @@ const char* vertexShaderSource =
     "{\n"
     "   FragPos = vec3(model * vec4(aPos, 1.0));\n"
     "   Normal = mat3(transpose(inverse(model))) * aNormal;\n"
+    "   TexCoord = aTexCoord;\n"
     "   gl_Position = projection * view * vec4(FragPos, 1.0);\n"
     "}\0";
 
@@ -60,6 +63,7 @@ const char* fragmentShaderSource =
 
     "in vec3 FragPos;\n"
     "in vec3 Normal;\n"
+    "in vec2 TexCoord;\n"
 
     "out vec4 FragColor;\n"
 
@@ -67,6 +71,7 @@ const char* fragmentShaderSource =
     "uniform vec3 lightColor;\n"
     "uniform vec3 objectColor;\n"
     "uniform vec3 viewPos;\n"
+    "uniform sampler2D texture1;\n"
     "void main()\n"
     "{\n"
 
@@ -86,7 +91,8 @@ const char* fragmentShaderSource =
 
 "   vec3 specular = 0.85 * spec * lightColor;\n"
 
-"   vec3 result = (ambient + diffuse + specular) * objectColor;\n"
+"   vec3 texColor = texture(texture1, TexCoord).rgb;\n"
+"   vec3 result = (ambient + diffuse + specular) * texColor;\n"
 
     "   FragColor = vec4(result, 1.0);\n"
     "}\0";
@@ -195,7 +201,7 @@ glVertexAttribPointer(
     3,
     GL_FLOAT,
     GL_FALSE,
-    6 * sizeof(float),
+    8 * sizeof(float),
     (void*)0
 );
 
@@ -206,12 +212,22 @@ glVertexAttribPointer(
     3,
     GL_FLOAT,
     GL_FALSE,
-    6 * sizeof(float),
+    8 * sizeof(float),
     (void*)(3 * sizeof(float))
 );
 
 glEnableVertexAttribArray(1);
 
+glVertexAttribPointer(
+    2,
+    2,
+    GL_FLOAT,
+    GL_FALSE,
+    8 * sizeof(float),
+    (void*)(6 * sizeof(float))
+);
+
+glEnableVertexAttribArray(2);
 
 
 unsigned int shaderProgram = createShaderProgram();
@@ -231,12 +247,12 @@ glTexParameteri(GL_TEXTURE_2D,
 
 glTexParameteri(GL_TEXTURE_2D,
                 GL_TEXTURE_MIN_FILTER,
-                GL_LINEAR);
+                GL_LINEAR_MIPMAP_LINEAR);
 
 glTexParameteri(GL_TEXTURE_2D,
                 GL_TEXTURE_MAG_FILTER,
                 GL_LINEAR);
-
+                
 int width, height, nrChannels;
 
 unsigned char* data =
@@ -307,6 +323,17 @@ unsigned int viewPosLoc =
 glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 glUseProgram(shaderProgram);
+
+glActiveTexture(GL_TEXTURE0);
+glBindTexture(GL_TEXTURE_2D, texture);
+
+glUniform1i(
+    glGetUniformLocation(
+        shaderProgram,
+        "texture1"
+    ),
+    0
+);
 
 glUniform3f(lightPosLoc, 1.5f, 1.0f, 2.0f);
 
