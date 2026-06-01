@@ -11,7 +11,7 @@
 
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include "include/stb_image.h"
 
 
 
@@ -66,7 +66,7 @@ const char* fragmentShaderSource =
     "uniform vec3 lightPos;\n"
     "uniform vec3 lightColor;\n"
     "uniform vec3 objectColor;\n"
-
+    "uniform vec3 viewPos;\n"
     "void main()\n"
     "{\n"
 
@@ -76,10 +76,17 @@ const char* fragmentShaderSource =
     "   vec3 norm = normalize(Normal);\n"
     "   vec3 lightDir = normalize(lightPos - FragPos);\n"
 
-    "   float diff = max(dot(norm, lightDir), 0.0);\n"
-    "   vec3 diffuse = diff * lightColor;\n"
+"   float diff = max(dot(norm, lightDir), 0.0);\n"
+"   vec3 diffuse = diff * lightColor;\n"
 
-    "   vec3 result = (ambient + diffuse) * objectColor;\n"
+"   vec3 viewDir = normalize(viewPos - FragPos);\n"
+"   vec3 reflectDir = reflect(-lightDir, norm);\n"
+
+"   float spec = pow(max(dot(viewDir, reflectDir), 0.0), 32);\n"
+
+"   vec3 specular = 0.85 * spec * lightColor;\n"
+
+"   vec3 result = (ambient + diffuse + specular) * objectColor;\n"
 
     "   FragColor = vec4(result, 1.0);\n"
     "}\0";
@@ -259,9 +266,10 @@ if (data)
 }
 else
 {
-    std::cout << "Texture load failed" << std::endl;
+    std::cout << "Texture load failed: "
+              << stbi_failure_reason()
+              << std::endl;
 }
-
 stbi_image_free(data);
 
 unsigned int modelLoc =
@@ -281,6 +289,8 @@ unsigned int lightColorLoc =
 
 unsigned int objectColorLoc =
     glGetUniformLocation(shaderProgram, "objectColor");
+unsigned int viewPosLoc =
+    glGetUniformLocation(shaderProgram, "viewPos");
     // Главный цикл
     while (!glfwWindowShouldClose(window))
     
@@ -300,16 +310,20 @@ glUseProgram(shaderProgram);
 
 glUniform3f(lightPosLoc, 1.5f, 1.0f, 2.0f);
 
+glUniform3f(viewPosLoc,
+            0.0f,
+            0.0f,
+            3.0f);
+
 glUniform3f(lightColorLoc,
             1.0f,
             1.0f,
             1.0f);
 
 glUniform3f(objectColorLoc,
-            0.75f,
-            0.75f,
-            0.75f);
-
+            0.88f,
+            0.88f,
+            0.92f);
 glm::mat4 model = glm::mat4(1.0f);
 
 model = glm::rotate(
@@ -329,6 +343,10 @@ glm::mat4 projection = glm::perspective(
     0.1f,
     100.0f
 );
+
+
+
+glUseProgram(shaderProgram);
 
 glUniformMatrix4fv(
     modelLoc,
@@ -354,12 +372,6 @@ glUniformMatrix4fv(
 glBindVertexArray(VAO);
 
 glDrawArrays(GL_TRIANGLES, 0, 36);
-
-glUseProgram(shaderProgram);
-
-glBindVertexArray(VAO);
-
-glDrawArrays(GL_TRIANGLES, 0, 3);
 
 glfwSwapBuffers(window);
 

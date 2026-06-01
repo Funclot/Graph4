@@ -1,3 +1,5 @@
+#pragma once
+
 float vertices[] =
 {
     // задняя грань
