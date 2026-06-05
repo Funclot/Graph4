@@ -1,0 +1,2 @@
+$env:PATH += ";E:\Graph4\mingw\bin" 
+.\main.exe
