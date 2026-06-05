@@ -57,7 +57,7 @@ const char* vertexShaderSource =
     "   TexCoord = aTexCoord;\n"
     "   gl_Position = projection * view * vec4(FragPos, 1.0);\n"
     "}\0";
-
+//Освещение
 const char* fragmentShaderSource =
     "#version 330 core\n"
 
@@ -157,7 +157,7 @@ int main()
     glfwMakeContextCurrent(window);
 
 
-// GLAD 2
+// загрузка GLAD 2
 int version = gladLoadGL(glfwGetProcAddress);
 
 if (version == 0)
@@ -184,7 +184,7 @@ std::cout << "Loaded OpenGL "
 
 unsigned int VBO;
 unsigned int VAO;
-
+// создание куба VBO
 glGenVertexArrays(1, &VAO);
 glGenBuffers(1, &VBO);
 
@@ -195,7 +195,7 @@ glBufferData(GL_ARRAY_BUFFER,
              sizeof(vertices),
              vertices,
              GL_STATIC_DRAW);
-
+// атрибуты вершины
 glVertexAttribPointer(
     0,
     3,
@@ -229,7 +229,7 @@ glVertexAttribPointer(
 
 glEnableVertexAttribArray(2);
 
-
+//Шейдеры
 unsigned int shaderProgram = createShaderProgram();
 
 unsigned int texture;
@@ -254,7 +254,7 @@ glTexParameteri(GL_TEXTURE_2D,
                 GL_LINEAR);
                 
 int width, height, nrChannels;
-
+//Текстура
 unsigned char* data =
     stbi_load(
         "textures/platinum.jpg",
@@ -352,7 +352,7 @@ glUniform3f(objectColorLoc,
             0.88f,
             0.92f);
 glm::mat4 model = glm::mat4(1.0f);
-
+//Вращение
 model = glm::rotate(
     model,
     (float)glfwGetTime(),
